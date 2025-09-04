@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, user-scalable=no" name="viewport" />
+    <title>Generated Game</title>
+    <style>
+           body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+        }
+        .screen {
+            display: none;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        button {
+            background: linear-gradient(135deg, #283c86 0%, #45a247 100%);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            text-transform: uppercase;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            padding: 12px 30px;
+            margin: 20px auto 0;
+            display: block;
+            width: 215.15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #45a247 0%, #283c86 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        #game-title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            color: #e94560;
+        }
+        #game-controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(26, 26, 46, 0.8);
+            padding: 10px 0; /* Changed padding */
+            z-index: 101;
+            display: none;
+            text-align: center; /* Center align the content */
+        }
+        #game-controls button {
+            display: inline-block;
+            width: auto;
+            padding: 8px 15px;
+            margin: 0 5px; /* Reduced side margins */
+            font-size: 14px;
+        }
+        #hud {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #1a1a2e;
+            padding: 10px;
+            z-index: 100;
+            display: none;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #game-over-screen {
+            background-image: url('images/game-over.webp');
+            background-size: cover;
+            background-position: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        #game-container {
+            position: relative;
+            width: 90vw; /* Adjust width dynamically based on viewport width */
+            max-width: 800px; /* Maximum width for larger screens */
+            height: 70vh; /* Adjust height dynamically based on viewport height */
+            max-height: 600px; /* Maximum height for larger screens */
+            overflow: hidden;
+            border: 2px solid #e94560;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            margin: 0 auto; /* Center the container */
+            display: none;
+        }
+
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("images/game-splash.webp") no-repeat center center;
+            background-size: cover;
+            z-index: 0;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75); /* Transparent overlay */
+            z-index: 1; /* Still below the canvas */
+        }
+
+
+        #game-screen.active #game-container {
+            display: block; /* Show the container when the game screen is active */
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            background-color: transparent;
+            width: 100%; /* Ensure the canvas fills the container */
+            height: 100%;
+            z-index: 2;
+        }
+        #instructions-screen {
+            z-index: 200;
+        }
+        #instructions-screen.overlay {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        #instructions-screen .container {
+            background: #1a1a2e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+        }
+        @media (max-width: 600px) {
+            #game-title {
+                font-size: 2em;
+            }
+            button {
+                width: 80%;
+                font-size: 16px;
+            }
+            #game-controls button {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <div id="game-controls">
+      <button id="game-menu-button">Menu</button>
+      <button id="game-restart-button">Restart</button>
+      <button id="game-instructions-button">Instructions</button>
+    </div>
+    <div id="hud">
+        <div class="game-score">
+            Score: <span id="score"></span>
+            High Score: <span id="high-score"></span>
+        </div>
+    </div>
+
+    <div id="start-menu-screen" class="active screen">
+      <div class="container">
+        <h1 id="game-title">Pac-Man Hide Game</h1>
+        <button id="play-button">Play</button>
+        <button id="settings-button">Settings</button>
+        <button id="instructions-button">Instructions</button>
+      </div>
+    </div>
+
+    <div id="settings-screen" class="screen">
+      <div class="container">
+        <h2>Settings</h2>
+        <button id="settings-back-button">Back</button>
+      </div>
+    </div>
+
+    <div id="instructions-screen" class="screen">
+      <div class="container">
+        <h2>Instructions</h2>
+        <h3>How to Play:</h3>
+        <ul>
+          <li>Player 1 (Yellow) moves with Arrow keys.</li>
+          <li>Player 2 (Blue) moves with WASD keys.</li>
+          <li>Yellow can eat White ghosts but dies to Red.</li>
+          <li>Blue can eat Red ghosts but dies to White.</li>
+          <li>Score increases every second.</li>
+          <li>New ghosts spawn every 20 seconds.</li>
+          <li>Game ends only if both players die.</li>
+          <li>After 30 seconds, a bonus appears to revive a dead player.</li>
+          <li>Powerups will be generated to help the player.</li>
+          <li>Teleport Power up = purple</li>
+         <li>invincibility = gold </li>
+         <li>Speed increase = blue</li>
+        </ul>
+        <button id="instructions-back-button">Back</button>
+      </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div id="game-container">
+            <div id="background"></div>
+            <div id="overlay"></div> <!-- New overlay for transparency -->
+            <canvas id="gameCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="screen">
+      <div class="container">
+        <div id="game-over-message"></div>
+        <button id="play-again-button">Play Again</button>
+        <button id="main-menu-button">Main Menu</button>
+      </div>
+    </div>
+
+    <audio autoplay="" id="start-game-sound" loop="">
+      <source src="sounds/background-music.mp3" type="audio/mpeg" />
+    </audio>
+    <!-- <audio id="start-game-sound">
+      <source src="start-game-sound.mp3" type="audio/mpeg" />
+    </audio> -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        class GameUI {
+            constructor() {
+            this.startMenuScreen = document.getElementById('start-menu-screen');
+            this.settingsScreen = document.getElementById('settings-screen');
+            this.instructionsScreen = document.getElementById('instructions-screen');
+            this.gameContainer = document.getElementById('game-screen');
+            this.gameOverScreen = document.getElementById('game-over-screen');
+            this.gameControls = document.getElementById('game-controls');
+            this.hud = document.getElementById('hud');
+            this.scoreDisplay = document.getElementById('score');
+            this.highScoreDisplay = document.getElementById('high-score');
+            }
+
+            swapToScreen(screen) {
+                this.startMenuScreen.classList.remove('active');
+                this.settingsScreen.classList.remove('active');
+                this.instructionsScreen.classList.remove('active');
+                this.gameContainer.classList.remove('active');
+                this.gameOverScreen.classList.remove('active');
+                screen.classList.add('active'); // Add active class to the game screen
+
+                if (screen.id === 'game-screen') {
+                    this.hud.style.display = 'block';
+                    this.gameControls.style.display = 'block';
+                } else {
+                    this.hud.style.display = 'none';
+                    this.gameControls.style.display = 'none';
+                }
+            }
+
+
+            startGame() {
+                const startGameSound = document.getElementById('start-game-sound');
+                this.swapToScreen(this.gameContainer);
+                startGameSound.play();
+            }
+
+            endGame() {
+            const endGameSound = document.getElementById('end-game-sound');
+            this.swapToScreen(this.gameOverScreen);
+            endGameSound.play();
+            }
+
+            mainMenu() {
+            this.swapToScreen(this.startMenuScreen);
+            }
+
+            playAgain() {
+            this.swapToScreen(this.gameContainer);
+            }
+
+            settings() {
+            this.swapToScreen(this.settingsScreen);
+            }
+
+            instructions() {
+            this.swapToScreen(this.instructionsScreen);
+            }
+
+            updateScore(score) {
+                this.scoreDisplay.textContent = score;
+                let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+
+                if(score > highScore) {
+                    highScore = score;
+                }
+                localStorage.setItem('highScore', highScore); // Store in localStorage
+                this.highScoreDisplay.textContent = highScore;
+            }
+        }
+
+        class GameLogic {
+            constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            
+            // Set canvas size dynamically
+            this.resizeCanvas();
+
+            this.playerSize = 20;
+            this.ghostSize = 20;
+            this.speed = 3;
+            this.initialGhostSpeed = 2;
+
+            this.gameOver = false;
+            this.score = 0;
+            this.reviveBonus = null;
+            this.gameTime = 0;
+            this.powerUps = [];
+            this.obstacles = this.generateObstacles();
+
+            this.player1 = this.generateSafePosition("yellow");
+            this.player2 = this.generateSafePosition("blue");
+            
+
+
+
+            // this.player1 = { x: 100, y: 100, width: this.playerSize, height: this.playerSize, dx: 0, dy: 0, color: "yellow", alive: true };
+            // this.player2 = { x: 700, y: 500, width: this.playerSize, height: this.playerSize, dx: 0, dy: 0, color: "blue", alive: true };
+
+            this.redGhosts = Array.from({ length: 2 }, () => this.createGhost("red"));
+            this.whiteGhosts = Array.from({ length: 2 }, () => this.createGhost("white"));
+
+            this.keys = {};
+            document.addEventListener("keydown", (e) => this.keys[e.key] = true);
+            document.addEventListener("keyup", (e) => this.keys[e.key] = false);
+
+            // Handle screen resizing
+            window.addEventListener("resize", () => this.resizeCanvas());
+            }
+
+            generateSafePosition(color) {
+        let position;
+        let attempts = 0;
+        do {
+            position = {
+                x: Math.random() * (this.canvas.width - this.playerSize),
+                y: Math.random() * (this.canvas.height - this.playerSize),
+                width: this.playerSize,
+                height: this.playerSize,
+                color: color,
+                alive: true,
+                invincible: false
+            };
+            attempts++;
+        } while (this.obstacles.some(obstacle => obstacle.collidesWith(position)) && attempts < 50);
+
+        return position;
+    }
+
+
+            generateObstacles() {
+    const obstacles = [];
+    const minDistance = 80; // Minimum distance between obstacles
+
+    for (let i = 0; i < 8; i++) { // You can adjust the number of obstacles
+        let newObstacle;
+        let attempts = 0;
+
+        do {
+            newObstacle = new Obstacle(
+                Math.random() * (this.canvas.width - 50),
+                Math.random() * (this.canvas.height - 50),
+                75,
+                75,
+                Math.random() > 0.5 ? "rectangle" : "circle"
+            );
+            attempts++;
+        } while (
+            obstacles.some(obstacle => this.getDistance(obstacle, newObstacle) < minDistance) && attempts < 20
+        );
+
+        obstacles.push(newObstacle);
+    }
+
+    return obstacles;
+}
+
+// Helper function to calculate the distance between two obstacles
+getDistance(obstacle1, obstacle2) {
+    const dx = (obstacle1.x + obstacle1.width / 2) - (obstacle2.x + obstacle2.width / 2);
+    const dy = (obstacle1.y + obstacle1.height / 2) - (obstacle2.y + obstacle2.height / 2);
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+
+
+
+    spawnPowerUp() {
+    const types = ['invincibility','speed','teleport'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    
+    let newPowerUp;
+    do {
+        newPowerUp = new PowerUp(
+            type,
+            Math.random() * (this.canvas.width - 20),
+            Math.random() * (this.canvas.height - 20)
+        );
+    } while (this.obstacles.some(obstacle => obstacle.collidesWith(newPowerUp)));
+
+    this.powerUps.push(newPowerUp);
+}
+
+
+    checkPowerUpCollision(player) {
+        this.powerUps.forEach((powerUp, index) => {
+            if (powerUp.active && player.x < powerUp.x + 20 && player.x + 20 > powerUp.x && player.y < powerUp.y + 20 && player.y + 20 > powerUp.y) {
+                powerUp.active = false;
+                this.activatePowerUp(player, powerUp.type);
+                setTimeout(() => this.powerUps.splice(index, 1), 500);
+            }
+        });
+    }
+
+    activatePowerUp(player, type) {
+    if (type === 'speed') {
+        player.speed = 6;
+        setTimeout(() => player.speed = this.speed, 30000);
+    } else if (type === 'invincibility') {
+        player.invincible = true;
+        setTimeout(() => player.invincible = false, 30000);
+    } else if (type === 'teleport') {
+        let newPosition;
+        do {
+            newPosition = {
+                x: Math.random() * (this.canvas.width - 20),
+                y: Math.random() * (this.canvas.height - 20),
+                width: player.width,
+                height: player.height
+            };
+        } while (this.obstacles.some(obstacle => obstacle.collidesWith(newPosition))); // Ensure it's not inside an obstacle
+
+        player.x = newPosition.x;
+        player.y = newPosition.y;
+    }
+}
+
+
+            resizeCanvas() {
+            this.canvas.width = Math.min(window.innerWidth * 0.9, 800);
+            this.canvas.height = Math.min(window.innerHeight * 0.7, 600);
+            }
+
+            createGhost(color) {
+    let newGhost;
+    do {
+        newGhost = {
+            x: Math.random() * (this.canvas.width - this.ghostSize),
+            y: Math.random() * (this.canvas.height - this.ghostSize),
+            dx: Math.random() > 0.5 ? this.initialGhostSpeed : -this.initialGhostSpeed,
+            dy: Math.random() > 0.5 ? this.initialGhostSpeed : -this.initialGhostSpeed,
+            color: color,
+            width: this.ghostSize,
+            height: this.ghostSize
+        };
+    } while (this.obstacles.some(obstacle => obstacle.collidesWith(newGhost))); // Ensure no collision on spawn
+
+    return newGhost;
+}
+
+            
+        
+
+            updatePlayer(player, up, down, left, right) {
+    if (!player.alive) return;
+
+    let newX = player.x + ((this.keys[right] ? this.speed : 0) - (this.keys[left] ? this.speed : 0));
+    let newY = player.y + ((this.keys[down] ? this.speed : 0) - (this.keys[up] ? this.speed : 0));
+
+    // Check obstacle collisions before updating position
+    let collisionX = this.obstacles.some(obstacle => obstacle.collidesWith({ x: newX, y: player.y, width: player.width, height: player.height }));
+    let collisionY = this.obstacles.some(obstacle => obstacle.collidesWith({ x: player.x, y: newY, width: player.width, height: player.height }));
+
+    if (!collisionX) player.x = Math.max(0, Math.min(this.canvas.width - player.width, newX));
+    if (!collisionY) player.y = Math.max(0, Math.min(this.canvas.height - player.height, newY));
+}
+
+
+            // if (!this.obstacles.some(obstacle => obstacle.collidesWith({ x: player.x, y: player.y, width: player.width, height: player.height }))) {
+            // player.x = Math.max(0, Math.min(this.canvas.width - player.width, player.x));
+            // player.y = Math.max(0, Math.min(this.canvas.height - player.height, player.y));
+        
+
+        //     player.x = Math.max(0, Math.min(this.canvas.width - player.width, player.x));
+        //     player.y = Math.max(0, Math.min(this.canvas.height - player.height, player.y));
+
+        //     if (!player.alive) return;
+        // const newX = player.x + ((this.keys[right] ? player.speed : 0) - (this.keys[left] ? player.speed : 0));
+        // const newY = player.y + ((this.keys[down] ? player.speed : 0) - (this.keys[up] ? player.speed : 0));
+
+        // if (!this.obstacles.some(obstacle => obstacle.collidesWith({ x: newX, y: newY, width: player.width, height: player.height }))) {
+        //     player.x = Math.max(0, Math.min(this.canvas.width - player.width, newX));
+        //     player.y = Math.max(0, Math.min(this.canvas.height - player.height, newY));
+        // }
+            // }
+
+            updateGhosts(ghosts) {
+    ghosts.forEach(ghost => {
+        let newX = ghost.x + ghost.dx;
+        let newY = ghost.y + ghost.dy;
+
+        let collisionX = this.obstacles.some(obstacle => 
+            obstacle.collidesWith({ x: newX, y: ghost.y, width: this.ghostSize, height: this.ghostSize })
+        );
+        let collisionY = this.obstacles.some(obstacle => 
+            obstacle.collidesWith({ x: ghost.x, y: newY, width: this.ghostSize, height: this.ghostSize })
+        );
+
+        if (!collisionX) {
+            ghost.x = newX;
+        } else {
+            ghost.dx *= -1; // Reverse horizontal direction upon collision
+        }
+
+        if (!collisionY) {
+            ghost.y = newY;
+        } else {
+            ghost.dy *= -1; // Reverse vertical direction upon collision
+        }
+
+        // Ensure ghosts bounce off canvas edges
+        if (ghost.x <= 0 || ghost.x + this.ghostSize >= this.canvas.width) {
+            ghost.dx *= -1;
+        }
+        if (ghost.y <= 0 || ghost.y + this.ghostSize >= this.canvas.height) {
+            ghost.dy *= -1;
+        }
+    });
+}
+
+
+
+            checkCollision(a, b) {
+            return a.x < b.x + this.ghostSize && a.x + this.playerSize > b.x && a.y < b.y + this.ghostSize && a.y + this.playerSize > b.y;
+            }
+
+            // checkCollisions() {
+            // this.redGhosts.forEach((ghost, index) => {
+            //     if (this.player1.alive && this.checkCollision(this.player1, ghost)) this.player1.alive = false;
+            //     if (this.player2.alive && this.checkCollision(this.player2, ghost)) this.redGhosts.splice(index, 1);
+            // });
+
+            // this.whiteGhosts.forEach((ghost, index) => {
+            //     if (this.player2.alive && this.checkCollision(this.player2, ghost)) this.player2.alive = false;
+            //     if (this.player1.alive && this.checkCollision(this.player1, ghost)) this.whiteGhosts.splice(index, 1);
+            // });
+
+            // if (this.reviveBonus && (this.checkCollision(this.player1, this.reviveBonus) || this.checkCollision(this.player2, this.reviveBonus))) {
+            //     this.player1.alive = true;
+            //     this.player2.alive = true;
+            //     this.reviveBonus = null;
+            // }
+
+            // if (!this.player1.alive && !this.player2.alive) {
+            //     this.gameOver = true;
+            // }
+            // }
+
+            checkCollisions() {
+    this.redGhosts.forEach((ghost, index) => {
+        if (this.player1.alive && !this.player1.invincible && this.checkCollision(this.player1, ghost)) {
+            this.player1.alive = false;
+        }
+        if (this.player2.alive && this.checkCollision(this.player2, ghost)) {
+            this.redGhosts.splice(index, 1);
+        }
+    });
+
+    this.whiteGhosts.forEach((ghost, index) => {
+        if (this.player2.alive && !this.player2.invincible && this.checkCollision(this.player2, ghost)) {
+            this.player2.alive = false;
+        }
+        if (this.player1.alive && this.checkCollision(this.player1, ghost)) {
+            this.whiteGhosts.splice(index, 1);
+        }
+    });
+
+    // Revive bonus check
+    if (this.reviveBonus && 
+        (this.checkCollision(this.player1, this.reviveBonus) || this.checkCollision(this.player2, this.reviveBonus))) {
+        this.player1.alive = true;
+        this.player2.alive = true;
+        this.reviveBonus = null;
+    }
+
+    // **Ensure Game Ends When Both Players Die**
+    if (!this.player1.alive && !this.player2.alive) {
+        this.gameOver = true;
+    }
+}
+
+
+
+            spawnNewGhosts() {
+            this.redGhosts.push(this.createGhost("red"));
+            this.whiteGhosts.push(this.createGhost("white"));
+            }
+            spawnReviveBonus() {
+    let newBonus;
+    do {
+        newBonus = {
+            x: Math.random() * (this.canvas.width - 20),
+            y: Math.random() * (this.canvas.height - 20),
+            width: 20,
+            height: 20
+        };
+    } while (this.obstacles.some(obstacle => obstacle.collidesWith(newBonus))); // Ensure it's not inside an obstacle
+
+    this.reviveBonus = newBonus;
+}
+
+            
+
+            drawPlayer(player) {
+            if (player.alive) {
+                this.ctx.fillStyle = player.color;
+                this.ctx.fillRect(player.x, player.y, player.width, player.height);
+            }
+            }
+
+            drawGhosts(ghosts) {
+            ghosts.forEach(ghost => {
+                this.ctx.fillStyle = ghost.color;
+                this.ctx.fillRect(ghost.x, ghost.y, this.ghostSize, this.ghostSize);
+            });
+            }
+
+            drawBonus() {
+            if (this.reviveBonus) {
+                this.ctx.fillStyle = "green";
+                this.ctx.fillRect(this.reviveBonus.x, this.reviveBonus.y, this.reviveBonus.width, this.reviveBonus.height);
+            }
+            }
+
+            // drawPowerUps (){
+            //     {
+            //     ctx.fillStyle = this.colors[this.type];
+            // ctx.beginPath();
+            // ctx.arc(this.x + 10, this.y + 10, 10, 0, Math.PI * 2);
+            // ctx.shadowBlur = 10;
+            // ctx.shadowColor = this.colors[this.type];
+            // ctx.fill();
+            // ctx.shadowBlur = 0;
+            //     this.ctx.fillRect(this.reviveBonus.x, this.reviveBonus.y, this.reviveBonus.width, this.reviveBonus.height);
+            // } 
+            // }
+
+            resetGame() {
+            this.gameOver = false;
+            this.score = 0;
+            this.gameTime = 0;
+            this.player1.alive = true;
+            this.player2.alive = true;
+            this.redGhosts = Array.from({ length: 2 }, () => this.createGhost("red"));
+            this.whiteGhosts = Array.from({ length: 2 }, () => this.createGhost("white"));
+            this.reviveBonus = null;
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear the canvas
+            }
+        }
+
+        class PowerUp {
+    constructor(type, x, y) {
+        this.type = type;
+        this.x = x;
+        this.y = y;
+        this.width = 20;
+        this.height = 20;
+        this.active = true;
+        this.colors = { 'speed': 'blue', 'invincibility': 'gold', 'teleport': 'purple' };
+    }
+
+    draw(ctx) {
+        if (this.active) {
+            ctx.fillStyle = this.colors[this.type];
+            ctx.beginPath();
+            ctx.arc(this.x + 10, this.y + 10, 10, 0, Math.PI * 2);
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.colors[this.type];
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+}
+
+class Obstacle {
+    constructor(x, y, width, height, shape) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.shape = shape;
+        this.color = "gray";
+        this.image = new Image();
+        this.image.src = "images/obstacle-neon-wall.webp";
+    }
+
+    draw(ctx) {
+        if (this.image.complete) {
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        } else {
+            // If image isn't loaded yet, draw a placeholder rectangle
+            ctx.fillStyle = "gray";
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    collidesWith(entity) {
+        return (
+            entity.x < this.x + this.width &&
+            entity.x + entity.width > this.x &&
+            entity.y < this.y + this.height &&
+            entity.y + entity.height > this.y
+        );
+    }
+}
+
+        class Game {
+            constructor() {
+            this.ui = new GameUI();
+            this.lastFrameTime = 0;
+            this.updateInterval = 1000 / 60;
+            this.done = false;
+            this.isPaused = false;
+            this.animationFrameId = null;
+            this.logic = null; // Initialize logic as null
+            }
+
+            prepareGame() {
+            this.assignButtons();
+            }
+
+            startGame() {
+                this.logic = new GameLogic(); // Initialize GameLogic on start/reset
+                this.logic.resetGame();
+                this.ui.startGame();
+
+                // Start the game loop
+                this.done = false;
+                this.lastFrameTime = performance.now();
+                // this.gameLoop(this.lastFrameTime);
+                this.gameLoop();
+            }
+
+            updateGame() {
+            this.logic.updatePlayer(this.logic.player1, "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight");
+            this.logic.updatePlayer(this.logic.player2, "w", "s", "a", "d");
+            this.logic.updateGhosts(this.logic.redGhosts);
+            this.logic.updateGhosts(this.logic.whiteGhosts);
+            this.logic.checkCollisions();
+
+            this.logic.checkPowerUpCollision(this.logic.player1);
+            this.logic.checkPowerUpCollision(this.logic.player2);
+        
+            if (this.logic.gameTime % 1200 === 0) {
+            this.logic.spawnPowerUp();
+            }
+
+            if (this.logic.gameTime % 1200 === 0 && this.logic.gameTime > 0) {
+                this.logic.spawnNewGhosts();
+            }
+
+            if ((!this.logic.player1.alive || !this.logic.player2.alive) && this.logic.reviveBonus === null) {
+                if (this.logic.gameTime % 1800 === 0) {
+                this.logic.spawnReviveBonus();
+                }
+            }
+
+            this.logic.gameTime++;
+            this.ui.updateScore(this.logic.score++);
+
+            if (this.logic.gameOver) {
+                this.ui.endGame();
+                this.done = true;
+            }
+            }
+
+            resetGame() {
+            this.logic = new GameLogic(); // Reinitialize GameLogic on reset
+            this.isPaused = false;
+            cancelAnimationFrame(this.animationFrameId);
+            }
+
+            pause() {
+            this.isPaused = true;
+            cancelAnimationFrame(this.animationFrameId);
+            }
+
+            resume() {
+            this.isPaused = false;
+            this.gameLoop();
+            }
+
+            gameLoop() { // timestamp
+            if (this.done) return;
+            // const deltaTime = timestamp - this.lastFrameTime;
+            // if (deltaTime > this.updateInterval) {
+                this.logic.ctx.clearRect(0, 0, this.logic.canvas.width, this.logic.canvas.height); // Clear canvas before redrawing
+                this.updateGame();
+                this.logic.drawPlayer(this.logic.player1);
+                this.logic.drawPlayer(this.logic.player2);
+                this.logic.drawGhosts(this.logic.redGhosts);
+                this.logic.drawGhosts(this.logic.whiteGhosts);
+                this.logic.drawBonus();
+                this.logic.powerUps.forEach(powerUp => powerUp.draw(this.logic.ctx));
+                this.logic.obstacles.forEach(obstacle => obstacle.draw(this.logic.ctx));
+                // this.lastFrameTime = timestamp;
+            // }
+            // if (this.animationFrameId) {
+            //     cancelAnimationFrame(this.animationFrameId);
+            // }
+            // this.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+                 requestAnimationFrame(this.gameLoop.bind(this));
+            }
+
+            assignButtons() {
+            const playButton = document.getElementById('play-button');
+            const settingsButton = document.getElementById('settings-button');
+            const instructionsButton = document.getElementById('instructions-button');
+            const playAgainButton = document.getElementById('play-again-button');
+            const mainMenuButtons = document.querySelectorAll('#main-menu-button, #settings-back-button, #instructions-back-button');
+            const gameMenuButton = document.getElementById('game-menu-button');
+            const gameRestartButton = document.getElementById('game-restart-button');
+            const gameInstructionsButton = document.getElementById('game-instructions-button');
+
+            playButton.addEventListener('click', this.startGame.bind(this));
+            settingsButton.addEventListener('click', this.ui.settings.bind(this.ui));
+            instructionsButton.addEventListener('click', this.ui.instructions.bind(this.ui));
+            playAgainButton.addEventListener('click', this.startGame.bind(this));
+            mainMenuButtons.forEach(button => button.addEventListener('click', () => {
+                this.ui.mainMenu();
+            }));
+            gameMenuButton.addEventListener('click', () => {
+                this.ui.mainMenu();
+            });
+            gameRestartButton.addEventListener('click', this.startGame.bind(this));
+            gameInstructionsButton.addEventListener('click', () => {
+                this.pause();
+                this.ui.swapToScreen(this.ui.instructionsScreen);
+                document.getElementById('instructions-back-button').addEventListener('click', () => {
+                this.ui.swapToScreen(this.ui.gameContainer);
+                this.resume();
+                }, { once: true });
+            });
+            }
+        }
+
+        const game = new Game();
+        game.prepareGame();
+        });
+    </script>
+  </body>
+</html>

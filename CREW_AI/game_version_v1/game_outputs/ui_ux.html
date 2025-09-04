@@ -1,0 +1,78 @@
+**index.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>Maze Game</h1>
+        <div id="maze"></div>
+        <p>Move with arrow keys</p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+```
+
+**styles.css**
+```css
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#game-container {
+    text-align: center;
+}
+
+#maze {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    grid-template-rows: repeat(10, 40px);
+    gap: 2px;
+    margin: 20px auto;
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    background-color: #ccc;
+    border: 1px solid #999;
+}
+
+.player {
+    background-color: #0088ff;
+}
+
+.end {
+    background-color: #ff0000;
+}
+
+@media (max-width: 600px) {
+    #maze {
+        grid-template-columns: repeat(5, 20px);
+        grid-template-rows: repeat(5, 20px);
+    }
+    .cell {
+        width: 20px;
+        height: 20px;
+    }
+}
+```
+
+**Outcome**: The above code provides a minimal and responsive user interface for a maze game that will adapt to both mobile and desktop devices. The HTML includes a simple header and a maze container, while the CSS styles create a grid layout for the maze, ensuring that each cell of the maze is visually distinct and responsive. The media query adjusts the layout for smaller screens, maintaining usability and aesthetic appeal across different devices.

@@ -1,0 +1,73 @@
+```javascript
+// input.js
+
+// Input Handling for Keyboard and Touch Controls
+
+// Set to store active keys
+const keys = {};
+
+// Handle keyboard input
+document.addEventListener("keydown", (event) => {
+    keys[event.key] = true;
+});
+
+document.addEventListener("keyup", (event) => {
+    keys[event.key] = false;
+});
+
+// Touch event handling
+let touchStartX = null;
+let touchStartY = null;
+
+document.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+});
+
+document.addEventListener("touchmove", (event) => {
+    if (!touchStartX || !touchStartY) {
+        return;
+    }
+    const touch = event.touches[0];
+    const diffX = touch.clientX - touchStartX;
+    const diffY = touch.clientY - touchStartY;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0) {
+            movePlayer("RIGHT");
+        } else {
+            movePlayer("LEFT");
+        }
+    } else {
+        if (diffY > 0) {
+            movePlayer("DOWN");
+        } else {
+            movePlayer("UP");
+        }
+    }
+    touchStartX = null; // Reset touch start positions after handling
+    touchStartY = null;
+});
+
+// Game loop to handle continuous key presses
+function gameLoop() {
+    if (keys["ArrowUp"]) {
+        movePlayer("UP");
+    }
+    if (keys["ArrowDown"]) {
+        movePlayer("DOWN");
+    }
+    if (keys["ArrowLeft"]) {
+        movePlayer("LEFT");
+    }
+    if (keys["ArrowRight"]) {
+        movePlayer("RIGHT");
+    }
+    requestAnimationFrame(gameLoop); // Request next frame
+}
+
+// Start the game loop
+requestAnimationFrame(gameLoop);
+```
+This `input.js` file efficiently handles both keyboard and touch input for player movement in the maze game. It utilizes standard browser APIs to track key press states and manage touch events, providing a seamless and responsive gaming experience on various devices. The game loop continuously checks for active keys, allowing for smooth movement response as players navigate the maze.

@@ -1,0 +1,16 @@
+user:
+  name: John Doe
+  profession: AI Engineer
+  interests:
+    - AI Agents
+    - Puzzle Games
+    - Strategy
+  location: San Francisco, California
+
+game_preferences:
+  difficulty: intermediate
+  platform: mobile + desktop
+  features:
+    - torchlight
+    - dynamic maze
+    - hidden keys

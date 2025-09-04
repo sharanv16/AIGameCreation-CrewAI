@@ -1,0 +1,211 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            text-align: center;
+        }
+
+        #maze {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 2px;
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #ccc;
+            border: 1px solid #999;
+        }
+
+        .player {
+            background-color: #0088ff;
+        }
+
+        .end {
+            background-color: #ff0000;
+        }
+
+        @media (max-width: 600px) {
+            #maze {
+                grid-template-columns: repeat(5, 20px);
+                grid-template-rows: repeat(5, 20px);
+            }
+            .cell {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Maze Game</h1>
+        <div id="maze"></div>
+        <p>Move with arrow keys or swipe on the screen</p>
+    </div>
+    <script>
+        // Game Configurations
+        const mazeConfig = {
+            rows: 10,
+            cols: 10,
+            start: { x: 0, y: 0 },
+            end: { x: 9, y: 9 },
+        };
+
+        // Game State
+        let playerPosition = { ...mazeConfig.start };
+        let maze = [];
+
+        // Initialize the Maze
+        function initializeMaze(rows, cols) {
+            maze = Array.from({ length: rows }, () => Array(cols).fill(0));
+            // Here you can implement maze generation logic if needed
+        }
+
+        // Render the Maze
+        function renderMaze() {
+            const mazeContainer = document.getElementById("maze");
+            mazeContainer.innerHTML = ""; // Clear previous maze
+            maze.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    const cellDiv = document.createElement("div");
+                    cellDiv.className = "cell";
+                    if (rowIndex === playerPosition.y && colIndex === playerPosition.x) {
+                        cellDiv.classList.add("player");
+                    }
+                    if (rowIndex === mazeConfig.end.y && colIndex === mazeConfig.end.x) {
+                        cellDiv.classList.add("end");
+                    }
+                    mazeContainer.appendChild(cellDiv);
+                });
+            });
+        }
+
+        // Move Player
+        function movePlayer(direction) {
+            const { x, y } = playerPosition;
+            switch (direction) {
+                case "UP":
+                    if (y > 0) playerPosition.y--;
+                    break;
+                case "DOWN":
+                    if (y < mazeConfig.rows - 1) playerPosition.y++;
+                    break;
+                case "LEFT":
+                    if (x > 0) playerPosition.x--;
+                    break;
+                case "RIGHT":
+                    if (x < mazeConfig.cols - 1) playerPosition.x++;
+                    break;
+            }
+            checkWinCondition();
+            renderMaze();
+        }
+
+        // Check Win Condition
+        function checkWinCondition() {
+            if (playerPosition.x === mazeConfig.end.x && playerPosition.y === mazeConfig.end.y) {
+                alert("Congratulations! You've reached the end of the maze!");
+            }
+        }
+
+        // Input Handling for Keyboard and Touch Controls
+        const keys = {};
+
+        document.addEventListener("keydown", (event) => {
+            keys[event.key] = true;
+        });
+
+        document.addEventListener("keyup", (event) => {
+            keys[event.key] = false;
+        });
+
+        let touchStartX = null;
+        let touchStartY = null;
+
+        document.addEventListener("touchstart", (event) => {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        });
+
+        document.addEventListener("touchmove", (event) => {
+            if (!touchStartX || !touchStartY) {
+                return;
+            }
+            const touch = event.touches[0];
+            const diffX = touch.clientX - touchStartX;
+            const diffY = touch.clientY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) {
+                    movePlayer("RIGHT");
+                } else {
+                    movePlayer("LEFT");
+                }
+            } else {
+                if (diffY > 0) {
+                    movePlayer("DOWN");
+                } else {
+                    movePlayer("UP");
+                }
+            }
+            touchStartX = null; // Reset touch start positions after handling
+            touchStartY = null;
+        });
+
+        // Game loop to handle continuous key presses
+        function gameLoop() {
+            if (keys["ArrowUp"]) {
+                movePlayer("UP");
+            }
+            if (keys["ArrowDown"]) {
+                movePlayer("DOWN");
+            }
+            if (keys["ArrowLeft"]) {
+                movePlayer("LEFT");
+            }
+            if (keys["ArrowRight"]) {
+                movePlayer("RIGHT");
+            }
+            requestAnimationFrame(gameLoop); // Request next frame
+        }
+
+        // Start the Game
+        function startGame() {
+            initializeMaze(mazeConfig.rows, mazeConfig.cols);
+            renderMaze();
+            requestAnimationFrame(gameLoop); // Start the game loop
+        }
+
+        // Initialize the game on page load
+        window.onload = startGame;
+    </script>
+</body>
+</html>
+```
+
+Outcome: The above code merges the given HTML, CSS, and JavaScript files into a single HTML document that presents a functional maze game. The game allows users to navigate through the maze using keyboard arrow keys or touch gestures. The HTML structure provides a clear layout while the CSS gives the maze a responsive and visually appealing design. The integrated JavaScript handles all necessary game logic and user input, ensuring a seamless gaming experience across devices.

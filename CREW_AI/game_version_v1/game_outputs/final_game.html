@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+        }
+        .screen {
+            display: none;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        button {
+            background: linear-gradient(135deg, #283c86 0%, #45a247 100%);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            text-transform: uppercase;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            padding: 12px 30px;
+            margin: 20px auto 0;
+            display: block;
+            width: 215.15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #45a247 0%, #283c86 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        #hud {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #1a1a2e;
+            padding: 10px;
+            z-index: 100;
+            display: none;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        #game-container {
+            position: relative;
+            width: 90vw;
+            height: 60vw;
+            max-width: 800px;
+            max-height: 600px;
+            background-color: #000;
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+        }
+        .tile {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+        .visible {
+            background-color: transparent;
+        }
+        .wall {
+            background-color: #8B4513;
+        }
+        .player {
+            background-image: url('assets/sprites/player.png');
+            background-size: cover;
+            background-position: center;
+            animation: glowing 1.5s infinite; /* Apply glowing animation */
+        }
+        .key {
+            background-image: url('assets/sprites/key.png');
+            background-size: cover;
+            background-position: center;
+            animation: glowing 1.5s infinite; /* Apply glowing animation */
+        }
+        .door {
+            background-image: url('assets/sprites/door.png');
+            background-size: cover;
+            background-position: center;
+            animation: glowing 1.5s infinite; /* Apply glowing animation */
+        }
+        .dpad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px 60px;
+            gap: 5px;
+        }
+        .dpad button {
+            width: 60px;
+            height: 60px;
+            background-color: #555;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .dpad button:active {
+            background-color: #777;
+        }
+        #game-controls {
+            position: absolute; /* Changed to absolute for proper placement */
+            top: 10px; /* Add spacing from the top */
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+            display: flex;
+            flex-direction: row; /* Align buttons vertically */
+            align-items: center;
+            gap: 10px; /* Add spacing between buttons */
+            z-index: 101;
+        }
+        #game-controls button {
+            width: 150px; /* Set a consistent width for buttons */
+            padding: 10px;
+            font-size: 16px;
+        }
+        .difficulty-button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #283c86 0%, #45a247 100%);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .difficulty-button.active {
+            background: linear-gradient(135deg, #45a247 0%, #283c86 100%);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        .difficulty-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes glowing {
+            0% {
+                box-shadow: 0 0 5px rgba(255, 215, 0, 0.5), 0 0 10px rgba(255, 215, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.6);
+            }
+            100% {
+                box-shadow: 0 0 5px rgba(255, 215, 0, 0.5), 0 0 10px rgba(255, 215, 0, 0.4);
+            }
+        }
+
+        #start-menu-screen {
+            background-size: 100% auto; /* Default to maintain aspect ratio */
+            background-position: center;
+        }
+
+        @media (min-width: 768px) {
+            #start-menu-screen {
+                background-image: url('assets/images/mystic_maze_desktop.png'); /* Desktop image */
+                background-size: 100% auto; /* Maintain 16:9 aspect ratio */
+            }
+        }
+
+        @media (max-width: 767px) {
+            #start-menu-screen {
+                background-image: url('assets/images/mystic_maze_mobile.png'); /* Mobile image */
+                background-size: auto 100%; /* Maintain 9:16 aspect ratio */
+            }
+        }
+
+        /* Instructions Screen */
+        #instructions-screen {
+            background-size: 100% auto; /* Default to maintain aspect ratio */
+            background-position: center;
+        }
+
+        @media (min-width: 768px) {
+            #instructions-screen {
+                background-image: url('assets/images/instructions_desktop.png'); /* Desktop image */
+                background-size: 100% auto; /* Maintain 16:9 aspect ratio */
+            }
+        }
+
+        @media (max-width: 767px) {
+            #instructions-screen {
+                background-image: url('assets/images/instructions_mobile.png'); /* Mobile image */
+                background-size: auto 100%; /* Maintain 9:16 aspect ratio */
+            }
+        }
+
+        /* Settings Screen */
+        #settings-screen {
+            background-size: 100% auto; /* Default to maintain aspect ratio */
+            background-position: center;
+        }
+
+        @media (min-width: 768px) {
+            #settings-screen {
+                background-image: url('assets/images/settings_desktop.png'); /* Desktop image */
+                background-size: 100% auto; /* Maintain 16:9 aspect ratio */
+            }
+        }
+
+        @media (max-width: 767px) {
+            #settings-screen {
+                background-image: url('assets/images/settings_mobile.png'); /* Mobile image */
+                background-size: auto 100%; /* Maintain 9:16 aspect ratio */
+            }
+        }
+
+        /* Game Over Screen */
+        #game-over-screen {
+            background-size: 100% auto; /* Default to maintain aspect ratio */
+            background-position: center;
+        }
+
+        @media (min-width: 768px) {
+            #game-over-screen {
+                background-image: url('assets/images/game_over_desktop.png'); /* Desktop image */
+                background-size: 100% auto; /* Maintain 16:9 aspect ratio */
+            }
+        }
+
+        @media (max-width: 767px) {
+            #game-over-screen {
+                background-image: url('assets/images/game_over_mobile.png'); /* Mobile image */
+                background-size: auto 100%; /* Maintain 9:16 aspect ratio */
+            }
+        }
+
+        /* Game Screen */
+        #game-screen {
+            background-size: 100% auto; /* Default to maintain aspect ratio */
+            background-position: center;
+        }
+
+        @media (min-width: 768px) {
+            #game-screen {
+                background-image: url('assets/images/game_background_desktop.png'); /* Desktop image */
+                background-size: 100% auto; /* Maintain 16:9 aspect ratio */
+            }
+        }
+
+        @media (max-width: 767px) {
+            #game-screen {
+                background-image: url('assets/images/game_background_mobile.png'); /* Mobile image */
+                background-size: auto 100%; /* Maintain 9:16 aspect ratio */
+            }
+        }
+
+        #instructions-screen .container {
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+            padding: 20px;
+            border-radius: 10px;
+            color: #ffffff; /* Ensure text is white for visibility */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Add a subtle shadow for better contrast */
+        }
+
+        #instructions-screen h2, 
+        #instructions-screen h3, 
+        #instructions-screen ul, 
+        #instructions-screen footer {
+            color: #ffffff; /* Ensure all text elements are white */
+        }
+
+        #instructions-screen ul li {
+            margin-bottom: 10px; /* Add spacing between list items */
+        }
+
+        #instructions-screen button {
+            background: linear-gradient(135deg, #283c86 0%, #45a247 100%);
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #instructions-screen button:hover {
+            background: linear-gradient(135deg, #45a247 0%, #283c86 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #settings-screen .time-limits {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+            border-radius: 10px;
+            color: #ffffff; /* White text for visibility */
+            font-size: 16px;
+            line-height: 1.5;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Subtle shadow for contrast */
+        }
+
+        #settings-screen .difficulty-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Add spacing between rows */
+        }
+
+        #settings-screen .difficulty-row {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Add spacing between button and text */
+        }
+
+        #settings-screen .difficulty-row button {
+            flex-shrink: 0; /* Prevent button from shrinking */
+        }
+
+        #settings-screen .difficulty-row span {
+            font-size: 16px;
+            color: #ffffff; /* Ensure text is visible */
+        }
+    </style>
+</head>
+<body>
+    <div id="game-controls">
+        <button id="game-menu-button">Menu</button>
+        <button id="game-restart-button">Restart</button>
+        <button id="game-instructions-button">Instructions</button>
+    </div>
+    <div id="hud">Keys: 0/3</div>
+
+    <div id="start-menu-screen" class="active screen">
+        <div class="container">
+            <h1 id="game-title"></h1>
+            <button id="play-button">Play</button>
+            <button id="instructions-button">Instructions</button>
+            <button id="settings-button">Settings</button>
+        </div>
+    </div>
+
+    <div id="instructions-screen" class="screen">
+        <div class="container">
+            <h2>Instructions</h2>
+            <section>
+                <h3>Controls:</h3>
+                <ul>
+                    <li>WASD or Arrow keys to move</li>
+                    <li>Touch controls on mobile devices</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Objective:</h3>
+                <ul>
+                    <li>Collect all keys</li>
+                    <li>Reach the red door to win</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Tips:</h3>
+                <ul>
+                    <li>Explore the maze carefully</li>
+                    <li>Use the torchlight to reveal hidden paths</li>
+                    <li>Be quick! You have limited time!</li>
+                </ul>
+            </section>
+            <footer>
+                <p>Good luck!</p>
+                <p><em>Game created by AI for Visual Computing</em></p>
+            </footer>
+            <button id="instructions-back-button">Back</button>
+        </div>
+    </div>
+
+    <div id="settings-screen" class="screen">
+        <div class="container">
+            <h2>Settings</h2>
+            <section>
+                <h3>Difficulty:</h3>
+                <div class="difficulty-container">
+                    <div class="difficulty-row">
+                        <button id="easy-button" class="difficulty-button">Easy</button>
+                        <strong>Time Limit: 45 seconds</strong>
+                    </div>
+                    <div class="difficulty-row">
+                        <button id="medium-button" class="difficulty-button">Medium</button>
+                        <strong>Time Limit: 30 seconds</strong>
+                    </div>
+                    <div class="difficulty-row">
+                        <button id="hard-button" class="difficulty-button">Hard</button>
+                        <strong>Time Limit: 20 seconds</strong>
+                    </div>
+                </div>
+            </section>
+            <button id="settings-back-button">Back</button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div id="game-container"></div>
+        <div class="dpad">
+            <button id="up">↑</button>
+            <button disabled></button>
+            <button id="down">↓</button>
+            <button id="left">←</button>
+            <button disabled></button>
+            <button id="right">→</button>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="screen">
+        <div class="container">
+            <h2>Game Over</h2>
+            <button id="play-again-button">Play Again</button>
+            <button id="main-menu-button">Main Menu</button>
+        </div>
+    </div>
+
+    <audio id="game-bg-audio" src="assets/audios/game_bg.mp3" loop></audio>
+    <audio id="key-bg-audio" src="assets/audios/key_bg.wav"></audio>
+    <audio id="door-bg-audio" src="assets/audios/door_bg.wav"></audio>
+
+    <script>
+        const TILE_SIZE = 40;
+        const MAZE_WIDTH = 20;
+        const MAZE_HEIGHT = 15;
+        const totalKeys = 3;
+
+        let keysCollected = 0;
+        let playerPosition = { x: 1, y: 1 };
+        let keyPositions = [];
+        let doorPosition = { x: 18, y: 13 };
+
+        const gameContainer = document.getElementById('game-container');
+        const hud = document.getElementById('hud');
+
+        let timerInterval;
+
+        function endGameWithGameOver() {
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const gameOverMessage = document.createElement('h2');
+            gameOverScreen.classList.add('active');
+            gameOverMessage.innerText = "Game Over! Time's up!";
+            gameOverScreen.querySelector('.container').prepend(gameOverMessage);
+
+            swapToScreen(gameOverScreen);
+        }
+
+        const TIME_TO_FINISH = {
+            EASY: 45,
+            MEDIUM: 30,
+            HARD: 20
+        };
+
+        let timeRemaining;
+
+        function startTimer() {
+            const hud = document.getElementById('hud');
+            const difficulty = localStorage.getItem('difficulty') || 'MEDIUM'; // Default to MEDIUM
+            timeRemaining = TIME_TO_FINISH[difficulty.toUpperCase()]; // Set time based on difficulty
+            hud.innerText = `Keys: ${keysCollected}/${totalKeys} | Time: ${timeRemaining}s`;
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                hud.innerText = `Keys: ${keysCollected}/${totalKeys} | Time: ${timeRemaining}s`;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    endGameWithGameOver();
+                }
+            }, 1000);
+        }
+
+        function resetGame() {
+            keysCollected = 0; // Reset key count
+            hud.innerText = `Keys: ${keysCollected}/${totalKeys}`; // Update HUD
+            playerPosition = { x: 1, y: 1 }; // Reset player position
+            createMaze(); // Recreate the maze
+            clearInterval(timerInterval); // Clear any existing timer
+            startTimer(); // Start a new timer
+        }
+
+        function createMaze() {
+            gameContainer.innerHTML = '';
+            keyPositions = [];
+            for (let y = 0; y < MAZE_HEIGHT; y++) {
+                for (let x = 0; x < MAZE_WIDTH; x++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    if (x === 0 || y === 0 || x === MAZE_WIDTH - 1 || y === MAZE_HEIGHT - 1 || Math.random() < 0.3) {
+                        tile.classList.add('wall');
+                    }
+                    gameContainer.appendChild(tile);
+                }
+            }
+            placePlayer();
+            placeKeys();
+            placeDoor();
+            updateVisibility(); // Initially reveal only the tiles around the player
+        }
+
+        function placePlayer() {
+            let position;
+            do {
+                position = {
+                    x: Math.floor(Math.random() * (MAZE_WIDTH - 2)) + 1,
+                    y: Math.floor(Math.random() * (MAZE_HEIGHT - 2)) + 1
+                };
+                const index = position.y * MAZE_WIDTH + position.x;
+                const tile = gameContainer.children[index];
+                if (!tile.classList.contains('wall')) {
+                    playerPosition = position;
+                    tile.classList.add('player');
+                    break;
+                }
+            } while (true);
+        }
+
+        function placeKeys() {
+            for (let i = 0; i < totalKeys; i++) {
+                let position;
+                do {
+                    position = {
+                        x: Math.floor(Math.random() * (MAZE_WIDTH - 2)) + 1,
+                        y: Math.floor(Math.random() * (MAZE_HEIGHT - 2)) + 1
+                    };
+                    const index = position.y * MAZE_WIDTH + position.x;
+                    const tile = gameContainer.children[index];
+                    if (
+                        !tile.classList.contains('wall') &&
+                        !keyPositions.some(k => k.x === position.x && k.y === position.y) &&
+                        !(position.x === playerPosition.x && position.y === playerPosition.y)
+                    ) {
+                        keyPositions.push(position);
+                        tile.classList.add('key');
+                        break;
+                    }
+                } while (true);
+            }
+        }
+
+        function placeDoor() {
+            let position;
+            do {
+                position = {
+                    x: Math.floor(Math.random() * (MAZE_WIDTH - 2)) + 1,
+                    y: Math.floor(Math.random() * (MAZE_HEIGHT - 2)) + 1
+                };
+                const index = position.y * MAZE_WIDTH + position.x;
+                const tile = gameContainer.children[index];
+                if (
+                    !tile.classList.contains('wall') &&
+                    !keyPositions.some(k => k.x === position.x && k.y === position.y) &&
+                    !(position.x === playerPosition.x && position.y === playerPosition.y)
+                ) {
+                    doorPosition = position;
+                    tile.classList.add('door');
+                    break;
+                }
+            } while (true);
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = playerPosition.x + dx;
+            const newY = playerPosition.y + dy;
+
+            if (newX < 0 || newY < 0 || newX >= MAZE_WIDTH || newY >= MAZE_HEIGHT) {
+                return;
+            }
+
+            const index = newY * MAZE_WIDTH + newX;
+            const tile = gameContainer.children[index];
+
+            if (!tile.classList.contains('wall')) {
+                const oldIndex = playerPosition.y * MAZE_WIDTH + playerPosition.x;
+                gameContainer.children[oldIndex].classList.remove('player');
+                playerPosition = { x: newX, y: newY };
+                tile.classList.add('player');
+                checkKeyCollision();
+                checkDoorCollision();
+                updateVisibility(); // Update visibility after moving
+            }
+        }
+
+        function updateVisibility() {
+            // Reset all tiles to hidden (black)
+            Array.from(gameContainer.children).forEach(tile => {
+                tile.classList.remove('visible');
+                tile.style.backgroundColor = '#000'; // Ensure all tiles are black by default
+            });
+
+            // Make the player's tile and 8 surrounding tiles visible
+            const directions = [
+                { x: 0, y: 0 }, // Player's current position
+                { x: 1, y: 0 },
+                { x: -1, y: 0 },
+                { x: 0, y: 1 },
+                { x: 0, y: -1 },
+                { x: 1, y: 1 },
+                { x: -1, y: -1 },
+                { x: 1, y: -1 },
+                { x: -1, y: 1 },
+            ];
+
+            directions.forEach(dir => {
+                const x = playerPosition.x + dir.x;
+                const y = playerPosition.y + dir.y;
+                if (x >= 0 && y >= 0 && x < MAZE_WIDTH && y < MAZE_HEIGHT) {
+                    const index = y * MAZE_WIDTH + x;
+                    const tile = gameContainer.children[index];
+                    tile.classList.add('visible');
+
+                    // Restore the original color or image for visible tiles
+                    if (tile.classList.contains('wall')) {
+                        tile.style.backgroundColor = '#8B4513'; // Brown for walls
+                    } else if (!tile.classList.contains('player')) {
+                        tile.style.backgroundColor = 'transparent'; // Transparent for empty tiles
+                    }
+                }
+            });
+
+            // Ensure keys and door are always visible with their images
+            keyPositions.forEach(key => {
+                const index = key.y * MAZE_WIDTH + key.x;
+                const tile = gameContainer.children[index];
+                tile.classList.add('key'); // Ensure the key class is applied
+            });
+
+            const doorIndex = doorPosition.y * MAZE_WIDTH + doorPosition.x;
+            const doorTile = gameContainer.children[doorIndex];
+            doorTile.classList.add('door'); // Ensure the door class is applied
+        }
+
+        function checkKeyCollision() {
+            const keyIndex = keyPositions.findIndex(
+                k => k.x === playerPosition.x && k.y === playerPosition.y
+            );
+            if (keyIndex !== -1) {
+                const keyPosition = keyPositions[keyIndex];
+                const index = keyPosition.y * MAZE_WIDTH + keyPosition.x;
+                const tile = gameContainer.children[index];
+                tile.classList.remove('key');
+                keyPositions.splice(keyIndex, 1);
+                keysCollected++;
+                hud.innerText = `Keys: ${keysCollected}/${totalKeys} | Time: ${timeRemaining}s`;
+
+                // Play key collection sound
+                const keyBgAudio = document.getElementById('key-bg-audio');
+                keyBgAudio.currentTime = 0; // Reset audio to start
+                keyBgAudio.play();
+            }
+        }
+
+        function checkDoorCollision() {
+            if (
+                playerPosition.x === doorPosition.x &&
+                playerPosition.y === doorPosition.y &&
+                keysCollected === totalKeys
+            ) {
+                // Play door sound
+                const doorBgAudio = document.getElementById('door-bg-audio');
+                doorBgAudio.currentTime = 0; // Reset audio to start
+                doorBgAudio.play();
+
+                alert('You Win! You escaped the maze!');
+                keysCollected = 0;
+                playerPosition = { x: 1, y: 1 };
+                resetGame();
+            }
+        }
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'ArrowUp') movePlayer(0, -1);
+            if (event.key === 'ArrowDown') movePlayer(0, 1);
+            if (event.key === 'ArrowLeft') movePlayer(-1, 0);
+            if (event.key === 'ArrowRight') movePlayer(1, 0);
+        });
+
+        document.getElementById('up').addEventListener('click', () => movePlayer(0, -1));
+        document.getElementById('down').addEventListener('click', () => movePlayer(0, 1));
+        document.getElementById('left').addEventListener('click', () => movePlayer(-1, 0));
+        document.getElementById('right').addEventListener('click', () => movePlayer(1, 0));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const hud = document.getElementById('hud');
+            const startMenuScreen = document.getElementById('start-menu-screen');
+            const instructionsScreen = document.getElementById('instructions-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const playButton = document.getElementById('play-button');
+            const instructionsButton = document.getElementById('instructions-button');
+            const instructionsBackButton = document.getElementById('instructions-back-button');
+            const playAgainButton = document.getElementById('play-again-button');
+            const mainMenuButton = document.getElementById('main-menu-button');
+            const gameMenuButton = document.getElementById('game-menu-button');
+            const gameRestartButton = document.getElementById('game-restart-button');
+            const gameInstructionsButton = document.getElementById('game-instructions-button');
+            const gameControls = document.getElementById('game-controls');
+            const settingsButton = document.getElementById('settings-button');
+            const settingsBackButton = document.getElementById('settings-back-button');
+            const settingsScreen = document.getElementById('settings-screen');
+            const difficultyButtons = document.querySelectorAll('.difficulty-button');
+
+            const gameBgAudio = document.getElementById('game-bg-audio');
+            playButton.addEventListener('click', () => {
+                gameBgAudio.play();
+                gameBgAudio.volume = 0.5; // Adjust volume if needed
+            });
+
+            function swapToScreen(screen) {
+                startMenuScreen.classList.remove('active');
+                instructionsScreen.classList.remove('active');
+                gameScreen.classList.remove('active');
+                gameOverScreen.classList.remove('active');
+                settingsScreen.classList.remove('active');
+                screen.classList.add('active');
+                hud.style.display = screen === gameScreen ? 'block' : 'none';
+                if (screen.id === 'game-screen') {
+                    hud.style.display = 'block';
+                    gameControls.style.display = 'flex'; // Show game controls
+                } else {
+                    hud.style.display = 'none';
+                    gameControls.style.display = 'none'; // Hide game controls
+                }
+            }
+
+            playButton.addEventListener('click', () => {
+                resetGame();
+                swapToScreen(gameScreen);
+            });
+
+            instructionsButton.addEventListener('click', () => swapToScreen(instructionsScreen));
+            instructionsBackButton.addEventListener('click', () => swapToScreen(startMenuScreen));
+            playAgainButton.addEventListener('click', () => {
+                resetGame();
+                swapToScreen(gameScreen);
+            });
+
+            mainMenuButton.addEventListener('click', () => swapToScreen(startMenuScreen));
+            gameMenuButton.addEventListener('click', () => swapToScreen(document.getElementById('start-menu-screen')));
+            gameRestartButton.addEventListener('click', () => {
+                resetGame();
+                swapToScreen(document.getElementById('game-screen'));
+            });
+
+            gameInstructionsButton.addEventListener('click', () => {
+                clearInterval(timerInterval); // Pause the timer
+                swapToScreen(document.getElementById('instructions-screen'));
+                document.getElementById('instructions-back-button').addEventListener('click', () => {
+                    swapToScreen(document.getElementById('game-screen'));
+                    startTimer(); // Resume the timer
+                }, { once: true });
+            });
+
+            settingsButton.addEventListener('click', () => {
+                startMenuScreen.classList.remove('active');
+                settingsScreen.classList.add('active');
+            });
+
+            settingsBackButton.addEventListener('click', () => {
+                settingsScreen.classList.remove('active');
+                startMenuScreen.classList.add('active');
+            });
+
+            // Load saved difficulty from local storage or default to Medium
+            const savedDifficulty = localStorage.getItem('difficulty') || 'Medium';
+            setActiveDifficultyButton(savedDifficulty);
+
+            difficultyButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const selectedDifficulty = button.innerText;
+                    localStorage.setItem('difficulty', selectedDifficulty); // Save to local storage
+                    setActiveDifficultyButton(selectedDifficulty);
+                });
+            });
+
+            function setActiveDifficultyButton(selectedDifficulty) {
+                difficultyButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.innerText === selectedDifficulty) {
+                        button.classList.add('active');
+                    }
+                });
+            }
+
+            createMaze();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+generate_game_logic:
+  description: >
+    Write modular JavaScript logic for the maze game including torchlight effect, key collection,
+    door interaction, and win condition.
+  expected_output: >
+    A JavaScript file `script.js` with reusable functions: generateMaze(), updateVisibility(), movePlayer(), etc.
+  output_file: game_outputs/script.js
+  agent: game_logic_agent
+
+design_ui_ux:
+  description: >
+    Create a responsive HTML/CSS UI for the maze game including the main menu, instructions, HUD, and game screen layout.
+  expected_output: >
+    - HTML layout in `index.html`
+    - Styles in `styles.css` (using Orbitron, mobile friendly)
+  context: ["generate_game_logic"]
+  output_file: game_outputs/ui_ux.html
+  agent: ui_ux_agent
+
+handle_input_controls:
+  description: >
+    Implement user input handling in `input.js` to support keyboard (arrow keys) and mobile D-pad navigation.
+  expected_output: >
+    A short `input.js` file with event listeners for arrow keys and touch buttons calling movePlayer().
+  context: ["generate_game_logic", "design_ui_ux"]
+  output_file: game_outputs/input.js
+  agent: user_input_agent
+
+generate_visual_assets:
+  description: >
+    Generate visual assets for the game using ChatGPT's image generation API, including startup screen, backgrounds, elements, and UI components.
+  expected_output: >
+    - A collection of game images for different screens and elements
+    - Image assets stored in `game_outputs/images/` directory
+  context: ["design_ui_ux"]
+  output_file: game_outputs/visual_assets_list.json
+  agent: image_asset_agent
+
+integrate_assets:
+  description: >
+    Integrate generated visual assets into the game codebase, ensuring proper loading, sizing, and responsiveness.
+  expected_output: >
+    - Updated HTML with image references
+    - JavaScript for asset loading and display
+  context: ["generate_visual_assets", "design_ui_ux"]
+  output_file: game_outputs/assets_integrated.html
+  agent: asset_integration_agent
+
+integrate_code_modules:
+  description: >
+    Merge the files (`index.html`, `styles.css`, `script.js`, `input.js`) into one deployable HTML file using the `GameTemplate.html`.
+  expected_output: >
+    - A unified `code_integrated.html` with all logic, layout, and styling embedded.
+  context: ["generate_game_logic", "design_ui_ux", "handle_input_controls"]
+  output_file: game_outputs/code_integrated.html
+  agent: code_integrator_agent
+
+test_and_debug_game:
+  description: >
+    Test the integrated game for bugs, broken UI elements, and non-functioning controls.
+    Patch any issues and finalize `final_game.html`.
+  expected_output: >
+    A polished `final_game.html` file, bug-free, mobile-optimized, and fully playable.
+  context: ["integrate_code_modules"]
+  output_file: game_outputs/final_game.html
+  agent: tester_debugger_agent

@@ -1,0 +1,97 @@
+```javascript
+// script.js
+
+// Game Configurations
+const mazeConfig = {
+    rows: 10,
+    cols: 10,
+    start: { x: 0, y: 0 },
+    end: { x: 9, y: 9 },
+};
+
+// Game State
+let playerPosition = { ...mazeConfig.start };
+let maze = [];
+
+// Initialize the Maze
+function initializeMaze(rows, cols) {
+    maze = Array.from({ length: rows }, () => Array(cols).fill(0));
+    // Here you can implement maze generation logic
+}
+
+// Render the Maze
+function renderMaze() {
+    const mazeContainer = document.getElementById("maze");
+    mazeContainer.innerHTML = ""; // Clear previous maze
+    maze.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+            const cellDiv = document.createElement("div");
+            cellDiv.className = "cell";
+            if (rowIndex === playerPosition.y && colIndex === playerPosition.x) {
+                cellDiv.classList.add("player");
+            }
+            if (rowIndex === mazeConfig.end.y && colIndex === mazeConfig.end.x) {
+                cellDiv.classList.add("end");
+            }
+            mazeContainer.appendChild(cellDiv);
+        });
+    });
+}
+
+// Move Player
+function movePlayer(direction) {
+    const { x, y } = playerPosition;
+    switch (direction) {
+        case "UP":
+            if (y > 0) playerPosition.y--;
+            break;
+        case "DOWN":
+            if (y < mazeConfig.rows - 1) playerPosition.y++;
+            break;
+        case "LEFT":
+            if (x > 0) playerPosition.x--;
+            break;
+        case "RIGHT":
+            if (x < mazeConfig.cols - 1) playerPosition.x++;
+            break;
+    }
+    checkWinCondition();
+    renderMaze();
+}
+
+// Check Win Condition
+function checkWinCondition() {
+    if (playerPosition.x === mazeConfig.end.x && playerPosition.y === mazeConfig.end.y) {
+        alert("Congratulations! You've reached the end of the maze!");
+    }
+}
+
+// Event Listeners for Player Movement
+document.addEventListener("keydown", (event) => {
+    switch (event.key) {
+        case "ArrowUp":
+            movePlayer("UP");
+            break;
+        case "ArrowDown":
+            movePlayer("DOWN");
+            break;
+        case "ArrowLeft":
+            movePlayer("LEFT");
+            break;
+        case "ArrowRight":
+            movePlayer("RIGHT");
+            break;
+    }
+});
+
+// Start the Game
+function startGame() {
+    initializeMaze(mazeConfig.rows, mazeConfig.cols);
+    renderMaze();
+}
+
+// Initialize the game on page load
+window.onload = startGame;
+```
+
+This script implements modular reusable functions to initialize the maze, render it, move the player, and check for winning conditions in a maze game. It handles keyboard input and provides a solid structure for further extensions.
